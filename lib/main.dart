@@ -46,8 +46,16 @@ class _MyAppState extends State<MyApp> {
 
   }
 
+// Send an event to Pinpoint
   void _recordEvent() async {
+    AnalyticsEvent event = AnalyticsEvent('test');
+    event.properties.addBoolProperty('boolKey', true);
+    event.properties.addDoubleProperty('doubleKey', 10.0);
+    event.properties.addIntProperty('intKey', 10);
+    event.properties.addStringProperty('stringKey', 'stringValue');
+    Amplify.Analytics.recordEvent(event: event);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +70,7 @@ class _MyAppState extends State<MyApp> {
                     children: [
                       const Padding(padding: EdgeInsets.all(5.0)),
                       Text(
-                          _amplifyConfigured ? 'configured' : 'not configured'
+                          _amplifyConfigured ? 'configured' : 'not yet configured'
                       ),
                       ElevatedButton(
                           onPressed: _amplifyConfigured ? _recordEvent : null,
