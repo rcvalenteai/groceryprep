@@ -43,7 +43,7 @@ def handler(event, context):
             if (recipe_obj.calories is None):
                 cur.execute(""" SELECT sum(IIR.quantity * I.calories) as calories 
                                 FROM GROCERY_PROJECT_DB.IngredientsInRecipe IIR, GROCERY_PROJECT_DB.Ingredients I 
-                                WHERE recipe_id = '1' and IIR.ingredient_id = I.ingredient_id;""")
+                                WHERE recipe_id = '{}' and IIR.ingredient_id = I.ingredient_id;""".format(recipe_obj.recipe_id))
                 calories = cur.fetchone()
                 recipe_obj.calories = int(calories['calories'])
 
