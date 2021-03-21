@@ -33,7 +33,7 @@ def handler(event, context):
         cur.execute("select * from GROCERY_PROJECT_DB.Recipes R where R.recipe_id = '{}'".format(recipe_id))
         recipe_dict = cur.fetchone()
 
-        cur.execute(""" SELECT I.iname, I.calories, I.quantity, I.unit
+        cur.execute(""" SELECT I.iname, I.calories, IIR.quantity, I.unit
                         FROM GROCERY_PROJECT_DB.Ingredients I INNER JOIN GROCERY_PROJECT_DB.IngredientsInRecipe IIR
                         ON I.ingredient_id = IIR.ingredient_id
                         WHERE IIR.recipe_id = '{}'""".format(recipe_dict['recipe_id']))
@@ -46,7 +46,7 @@ def handler(event, context):
 
     # Sort by search score if search string is present
 
-    recipe_dict['location'] = 'getRecipes/detail?recipeId={}'.format(recipe_dict['recipe_id'])
+    recipe_dict['location'] = 'recipes/detail?recipeId={}'.format(recipe_dict['recipe_id'])
     recipe_dict.pop('recipe_id')
     response = recipe_dict
     #response['ingredients'] = {'item_count': len(ingredients_list)}
@@ -61,12 +61,6 @@ def handler(event, context):
     logger.info(json_response)
 
     return json_response
-
-def getFuzzyScore(e):
-    return e['fuzzy_score']
-
-def getName(e):
-    return e['Recipe'].name
 
 class Recipe:
     def __init__(self, conn_dict):

@@ -69,7 +69,7 @@ def handler(event, context):
     recipe_json_list = []
     for recipe in recipe_list:
         rdict = recipe['Recipe'].__dict__
-        rdict['location'] = 'getRecipes/detail?recipeId={}'.format(rdict['recipe_id'])
+        rdict['location'] = 'recipes/detail?recipeId={}'.format(rdict['recipe_id'])
         rdict.pop('recipe_id')
         recipe_json_list.append(rdict)
 
