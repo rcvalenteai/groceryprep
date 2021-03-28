@@ -4,6 +4,7 @@ import rds_config
 import pymysql
 import json
 import time
+import re
 from datetime import date
 
 #rds settings
@@ -18,7 +19,15 @@ logger.setLevel(logging.INFO)
 
 def handler(event, context):
     user_id = event['userId']
-    group_id = event['groupId']
+    groupUrl = event['groupUrl']
+
+    match = re.match(r".*?group\?groupId=(\d*)", groupUrl)
+    if match is None:
+        return {
+            'errorMessage': json.dumps('Cannot extract groupId from groupUrl')
+        }
+
+    group_id = match.group(1)
     logger.info("Group Id: {}".format(group_id))
     if (group_id is None or not group_id):
         return {
