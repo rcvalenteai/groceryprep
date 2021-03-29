@@ -17,10 +17,16 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event, context):
-    search_string = event['search']
+    search_string = ""
+    if 'search' in event:
+        search_string = event['search']
     logger.info("Search string: {}".format(search_string))
-    if (search_string is None):
-        search_string = ""
+
+    tags = []
+    if 'filter' in event:
+        tag_filters = event['filter']
+        tags = tag_filters.split(',')
+    logger.info(tags)
 
     recipe_list = []
 
@@ -33,7 +39,13 @@ def handler(event, context):
     logger.info("SUCCESS: Connection to RDS MySQL instance succeeded")
 
     with conn.cursor() as cur:
-        cur.execute('select * from GROCERY_PROJECT_DB.Recipes')
+        base_query = "SELECT * FROM GROCERY_PROJECT_DB.Recipes R " 
+        if tags:
+            intersect_query = " AND R.recipe_id IN ".join(["(SELECT RT.recipe_id FROM GROCERY_PROJECT_DB.RecipeTag RT WHERE RT.tag = '{}')".format(tag) for tag in tags])
+            base_query += "WHERE R.recipe_id IN {};".format(intersect_query)
+        logger.info(base_query)
+                        
+        cur.execute(base_query)
         recipes = cur.fetchall()
         for recipe in recipes:
             #logger.info(recipe)
@@ -47,11 +59,15 @@ def handler(event, context):
                 calories = cur.fetchone()
                 recipe_obj.calories = int(calories['calories'])
 
+            cur.execute("""SELECT RT.tag FROM GROCERY_PROJECT_DB.RecipeTag RT WHERE RT.recipe_id = '{}'""".format(recipe_obj.recipe_id))
+            tag_dict_list = cur.fetchall()
+            logger.info("RecipeID {} Tags: {}".format(recipe_obj.recipe_id, tag_dict_list))
+            tags = [tag_dict.get('tag') for tag_dict in tag_dict_list]
 
             if (len(search_string) == 0):
-                recipe_list.append({'Recipe': recipe_obj, 'fuzzy_score': 100})
+                recipe_list.append({'Recipe': recipe_obj, 'Tags': tags, 'fuzzy_score': 100})
             elif (len(search_string) and fuzzy_score > 65):
-                recipe_list.append({'Recipe': recipe_obj, 'fuzzy_score': fuzzy_score})
+                recipe_list.append({'Recipe': recipe_obj, 'Tags': tags,  'fuzzy_score': fuzzy_score})
 
     cur.close()
     del cur
@@ -69,6 +85,7 @@ def handler(event, context):
     recipe_json_list = []
     for recipe in recipe_list:
         rdict = recipe['Recipe'].__dict__
+        rdict['Tags'] = recipe['Tags']
         rdict['location'] = 'recipes/detail?recipeId={}'.format(rdict['recipe_id'])
         rdict.pop('recipe_id')
         recipe_json_list.append(rdict)
