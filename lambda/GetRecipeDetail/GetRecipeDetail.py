@@ -57,7 +57,10 @@ def handler(event, context):
 
     response['ingredients'] = {'item_count': len(ingredients), 'items': ingredients}
     #response['items'] = recipe_json_list
-    json_response = json.dumps(response, indent=4)
+    json_response = {
+            "statusCode": 200,
+            "body": json.dumps(response, indent=4)
+        }
     logger.info(json_response)
 
     return json_response

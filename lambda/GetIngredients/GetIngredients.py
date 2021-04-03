@@ -17,12 +17,17 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event, context):
-    search_string = event['search']
+    search_string = ""
+    if 'search' in event:
+        search_string = event['search']
     logger.info("Search string: {}".format(search_string))
-    if (search_string is None):
-        search_string = ""
 
-    item_count = 0
+    tags = []
+    if 'filter' in event:
+        tag_filters = event['filter']
+        tags = tag_filters.split(',')
+    logger.info(tags)
+
     ingredient_list = []
 
     try:
@@ -34,16 +39,31 @@ def handler(event, context):
     logger.info("SUCCESS: Connection to RDS MySQL instance succeeded")
 
     with conn.cursor() as cur:
-        cur.execute('select * from GROCERY_PROJECT_DB.Ingredients')
+        base_query = "SELECT * FROM GROCERY_PROJECT_DB.Ingredients I " 
+        if tags:
+            intersect_query = " AND I.ingredient_id IN ".join(["(SELECT IT.ingredient_id FROM GROCERY_PROJECT_DB.IngredientTag IT WHERE IT.tag = '{}')".format(tag) for tag in tags])
+            base_query += "WHERE I.ingredient_id IN {};".format(intersect_query)
+        logger.info(base_query)
+
+        cur.execute(base_query)
         ingredients = cur.fetchall()
+
         for ingredient in ingredients:
-            item_count += 1
+            ingredient_obj = Ingredient(ingredient)
+            cur.execute("select * from GROCERY_PROJECT_DB.Ingredients I WHERE I.ingredient_id = '{}'".format(ingredient_obj.ingredient_id))
+            ingredients = cur.fetchone()
+
+            cur.execute("""SELECT IT.tag FROM GROCERY_PROJECT_DB.IngredientTag IT WHERE IT.ingredient_id = '{}'""".format(ingredient_obj.ingredient_id))
+            tag_dict_list = cur.fetchall()
+            logger.info("IngredientID {} Tags: {}".format(ingredient_obj.ingredient_id, tag_dict_list))
+            tags = [tag_dict.get('tag') for tag_dict in tag_dict_list]
+
             #logger.info(ingredient)
             fuzzy_score = fuzz.partial_ratio(ingredient['iname'], search_string)
-            if (len(search_string) and fuzzy_score > 65):
-                ingredient_list.append({'Ingredient': Ingredient(ingredient), 'fuzzy_score': fuzzy_score})
-            else:
-                ingredient_list.append({'Ingredient': Ingredient(ingredient), 'fuzzy_score': 100})
+            if (len(search_string) == 0):
+                ingredient_list.append({'Ingredient': ingredient_obj, 'Tags': tags, 'fuzzy_score': 100})
+            elif (len(search_string) and fuzzy_score > 65):
+                ingredient_list.append({'Ingredient': ingredient_obj, 'Tags': tags, 'fuzzy_score': fuzzy_score})
 
     cur.close()
     del cur
@@ -56,8 +76,16 @@ def handler(event, context):
     else:
         ingredient_list.sort(key=getName)
 
+    ingredient_json_list = []
     response = {'item_count': len(ingredient_list)}
-    response['items'] = [ingredient['Ingredient'].__dict__ for ingredient in ingredient_list]
+    for ingredient in ingredient_list:
+        idict = ingredient['Ingredient'].__dict__
+        idict['tags'] = ingredient['Tags']
+        idict['location'] = 'ingredients?ingredientId={}'.format(idict['ingredient_id'])
+        idict.pop('ingredient_id')
+        ingredient_json_list.append(idict)
+
+    response['items'] = ingredient_json_list
     json_response = json.dumps(response, indent=4)
     logger.info(json_response)
 
