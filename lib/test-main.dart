@@ -4,6 +4,8 @@ import 'package:amplify_analytics_pinpoint/amplify_analytics_pinpoint.dart';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'amplifyconfiguration.dart';
 
+import 'file:///C:/Users/rich/AndroidStudioProjects/groceryprep/lib/homewidget.dart';
+
 void main() {
   runApp(MyApp());
 }

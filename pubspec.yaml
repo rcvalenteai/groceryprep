@@ -27,6 +27,8 @@ dependencies:
 
   flutter:
     sdk: flutter
+  flutter_package_package:
+    path:  ./functions/flutter_package_package
 
 
 
