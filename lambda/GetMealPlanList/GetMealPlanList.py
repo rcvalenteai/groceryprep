@@ -85,7 +85,6 @@ def handler(event, context):
         meal_plan_json_list.append(mpdict)
 
     response['items'] = meal_plan_json_list
-    json_response = json.dumps(response, indent=4)
     logger.info(json_response)
 
     return json_response

@@ -24,14 +24,14 @@ def handler(event, context):
     match = re.match(r".*?group\?groupId=(\d*)", groupUrl)
     if match is None:
         return {
-            'errorMessage': json.dumps('Cannot extract groupId from groupUrl')
+            'errorMessage': 'Cannot extract groupId from groupUrl'
         }
 
     group_id = match.group(1)
     logger.info("Group Id: {}".format(group_id))
     if (group_id is None or not group_id):
         return {
-            'errorMessage': json.dumps('Cannot join a group without a groupId number.')
+            'errorMessage': 'Cannot join a group without a groupId number.'
         }
 
     try:
@@ -47,7 +47,7 @@ def handler(event, context):
         user = cur.fetchone()
         if not user:
             return {
-                'errorMessage': json.dumps('User doesn\'t exist.')
+                'errorMessage': 'User doesn\'t exist.'
             }
         logger.info("User Id: {}".format(user['user_id']))
 
@@ -55,7 +55,7 @@ def handler(event, context):
         group = cur.fetchone()
         if not group:
             return {
-                'errorMessage': json.dumps('Group doesn\'t exist.')
+                'errorMessage': 'Group doesn\'t exist.'
             }
         logger.info("Group Id: {}".format(group['order_group_id']))
 
@@ -64,7 +64,7 @@ def handler(event, context):
         group = cur.fetchone()
         if group:
             return {
-                'errorMessage': json.dumps('User is already part of order group.')
+                'errorMessage': 'User is already part of order group.'
             }
 
         cur.execute("INSERT INTO GROCERY_PROJECT_DB.UserInGroup (user_id, order_group_id) VALUES ('{}', '{}')".format(user_id, group_id))
@@ -82,7 +82,7 @@ def handler(event, context):
 
     response = {
     'statusCode': 200,
-    'body': json.dumps(body, indent=4)
+    'body': body
     }
     logger.info(response)
 

@@ -16,14 +16,12 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event, context):
-    group_url = event['groupUrl']
-
-    match = re.match(r".*?group\?groupId=(\d+)", group_url)
-    if match is None:
-        return {
-            'errorMessage': 'Cannot extract groupId from groupUrl'
-        }
-    group_id = match.group(1)
+    first_name = event['firstName']
+    last_name = event['lastName']
+    email = event['email']
+    address = event['address']
+    phone_number = event['phone']
+    user_password = event['password']
 
     try:
         conn = pymysql.Connect(host=rds_host, port=3306, user=name, passwd=password, db=db_name, connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
@@ -34,35 +32,31 @@ def handler(event, context):
     logger.info("SUCCESS: Connection to RDS MySQL instance succeeded")
 
     with conn.cursor() as cur:
-        cur.execute("SELECT * FROM GROCERY_PROJECT_DB.OrderGroups WHERE order_group_id = '{}'".format(group_id))
+        cur.execute("SELECT * FROM GROCERY_PROJECT_DB.Users WHERE email = '{}'".format(email))
         group = cur.fetchone()
-        if not group:
+        if group:
             return {
-                'errorMessage': 'Group doesn\'t exist.'
-            }
-        logger.info("Group Id: {}".format(group['order_group_id']))
-
-        cur.execute("SELECT * FROM GROCERY_PROJECT_DB.Order WHERE order_group_id = '{}' and is_open = 1".format(group_id))
-        order = cur.fetchone()
-        if order:
-            return {
-                'errorMessage': 'There is already an open order for this group.'
+                'errorMessage': json.dumps('User with email already exists.')
             }
 
-        cur.execute("INSERT INTO GROCERY_PROJECT_DB.Order (order_group_id, cost, is_open) VALUES ('{}', 0.0, 1);".format(group_id))
+        cur.execute("INSERT INTO GROCERY_PROJECT_DB.Users (fname, lname, email, address, phone, creation_date, hash_pass) VALUES ('{}', '{}', '{}', '{}', '{}', CURDATE(), '{}');".format(first_name, last_name, email, address, phone_number, user_password))
         conn.commit()
+
+        cur.execute("SELECT LAST_INSERT_ID() as userId;")
+        user_dict = cur.fetchone()
+        logger.info("UserUrl: {}".format(user_dict['userId']))
 
     cur.close()
     del cur
     conn.close()
 
     body = {
-        'groupLocation': 'group?groupId={}'.format(group_id)
+        'userUrl': 'user?userId={}'.format(user_dict['userId'])
     }
 
     response = {
     'statusCode': 201,
-    'body': body 
+    'body': body
     }
     logger.info(response)
 

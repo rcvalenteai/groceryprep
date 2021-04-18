@@ -23,20 +23,20 @@ def handler(event, context):
     match = re.match(r".*?recipes/detail\?recipeId=(\d+)", recipe_url)
     if match is None:
         return {
-            'errorMessage': json.dumps('Cannot extract recipeId from recipeUrl')
+            'errorMessage': 'Cannot extract recipeId from recipeUrl'
         }
     recipe_id = match.group(1)
 
     match = re.match(r".*?group\?groupId=(\d+)", group_url)
     if match is None:
         return {
-            'errorMessage': json.dumps('Cannot extract groupId from groupUrl')
+            'errorMessage': 'Cannot extract groupId from groupUrl'
         }
     group_id = match.group(1)
 
     if not isinstance(quantity, int):
         return {
-            'errorMessage': json.dumps('Quantity must be an int.')
+            'errorMessage': 'Quantity must be an int.'
         }
 
     logger.info("Recipe Id: {}".format(recipe_id))
@@ -56,7 +56,7 @@ def handler(event, context):
         recipe = cur.fetchone()
         if not recipe:
             return {
-                'errorMessage': json.dumps('Recipe doesn\'t exist.')
+                'errorMessage': 'Recipe doesn\'t exist.'
             }
         logger.info("recipe Id: {}".format(recipe['recipe_id']))
 
@@ -65,7 +65,7 @@ def handler(event, context):
         group = cur.fetchone()
         if not group:
             return {
-                'errorMessage': json.dumps('Group doesn\'t exist.')
+                'errorMessage': 'Group doesn\'t exist.'
             }
         logger.info("Group Id: {}".format(group['order_group_id']))
 
@@ -74,7 +74,7 @@ def handler(event, context):
         order = cur.fetchone()
         if not order:
             return {
-                    'errorMessage': json.dumps('There is not an open order for this groupId: {}'.format(group_id))
+                    'errorMessage': 'There is not an open order for this groupId: {}'.format(group_id)
             }
         logger.info("Order Id: {}".format(order['order_id']))
 
@@ -93,7 +93,7 @@ def handler(event, context):
 
     response = {
     'statusCode': 200,
-    'body': json.dumps(body, indent=4)
+    'body': body
     }
     logger.info(response)
 

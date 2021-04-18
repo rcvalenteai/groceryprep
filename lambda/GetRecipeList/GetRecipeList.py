@@ -91,7 +91,6 @@ def handler(event, context):
         recipe_json_list.append(rdict)
 
     response['items'] = recipe_json_list
-    json_response = json.dumps(response, indent=4)
     logger.info(json_response)
 
     return json_response

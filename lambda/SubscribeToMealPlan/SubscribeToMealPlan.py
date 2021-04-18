@@ -22,7 +22,7 @@ def handler(event, context):
     match = re.match(r".*?mealPlans/detail\?mealPlanId=(\d+)", meal_plan_url)
     if match is None:
         return {
-            'errorMessage': json.dumps('Cannot extract mealPlanId from mealPlanUrl')
+            'errorMessage': 'Cannot extract mealPlanId from mealPlanUrl'
         }
     meal_plan_id = match.group(1)
 
@@ -51,7 +51,7 @@ def handler(event, context):
         meal_plan = cur.fetchone()
         if not meal_plan:
             return {
-                'errorMessage': json.dumps('MealPlan doesn\'t exist.')
+                'errorMessage': 'MealPlan doesn\'t exist.'
             }
         logger.info("meal_plan Id: {}".format(meal_plan['meal_plan_id']))
 
@@ -60,7 +60,7 @@ def handler(event, context):
         user = cur.fetchone()
         if not user:
             return {
-                'errorMessage': json.dumps('User doesn\'t exist.')
+                'errorMessage': 'User doesn\'t exist.'
             }
         logger.info("User Id: {}".format(user['user_id']))
 
@@ -69,7 +69,7 @@ def handler(event, context):
         subscribe = cur.fetchone()
         if subscribe:
             return {
-                    'errorMessage': json.dumps('UserId {} is already subscribed to MealPlanId {}'.format(user_id, meal_plan_id))
+                    'errorMessage': 'UserId {} is already subscribed to MealPlanId {}'.format(user_id, meal_plan_id)
             }
 
         cur.execute("INSERT INTO GROCERY_PROJECT_DB.Subscribe (user_id, meal_plan_id) VALUES ('{}', '{}')".format(user_id, meal_plan_id))
@@ -85,7 +85,7 @@ def handler(event, context):
 
     response = {
     'statusCode': 200,
-    'body': json.dumps(body, indent=4)
+    'body': body
     }
     logger.info(response)
 

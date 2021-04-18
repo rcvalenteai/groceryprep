@@ -33,7 +33,7 @@ def handler(event, context):
         user = cur.fetchone()
         if not user:
             return {
-                'errorMessage': json.dumps('User doesn\'t exist.')
+                'errorMessage': 'User doesn\'t exist.'
             }
         logger.info("User Id: {}".format(user['user_id']))
 
@@ -77,7 +77,6 @@ def handler(event, context):
         recipe_json_list.append(rdict)
 
     response['items'] = recipe_json_list
-    json_response = json.dumps(response, indent=4)
     logger.info(json_response)
 
     return json_response

@@ -22,7 +22,7 @@ def handler(event, context):
     logger.info("Group Name: {}".format(group_name))
     if (group_name is None or not group_name):
         return {
-            'errorMessage': json.dumps('Cannot create a group without a group name.')
+            'errorMessage': 'Cannot create a group without a group name.'
         }
 
     try:
@@ -38,7 +38,7 @@ def handler(event, context):
         user = cur.fetchone()
         if not user:
             return {
-                'errorMessage': json.dumps('User doesn\'t exist.')
+                'errorMessage': 'User doesn\'t exist.'
             }
         logger.info("User Id: {}".format(user['user_id']))
 
@@ -66,7 +66,7 @@ def handler(event, context):
 
     response = {
     'statusCode': 201,
-    'body': json.dumps(body, indent=4)
+    'body': body
     }
     logger.info(response)
 

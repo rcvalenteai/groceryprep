@@ -86,7 +86,6 @@ def handler(event, context):
         ingredient_json_list.append(idict)
 
     response['items'] = ingredient_json_list
-    json_response = json.dumps(response, indent=4)
     logger.info(json_response)
 
     return json_response
