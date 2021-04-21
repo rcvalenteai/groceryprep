@@ -86,9 +86,9 @@ def handler(event, context):
         ingredient_json_list.append(idict)
 
     response['items'] = ingredient_json_list
-    logger.info(json_response)
+    logger.info(response)
 
-    return json_response
+    return response
 
 def getFuzzyScore(e):
     return e['fuzzy_score']

@@ -32,6 +32,12 @@ def handler(event, context):
     with conn.cursor() as cur:
         cur.execute("select * from GROCERY_PROJECT_DB.Recipes R where R.recipe_id = '{}'".format(recipe_id))
         recipe_dict = cur.fetchone()
+        if (recipe_dict['calories'] is None):
+            cur.execute(""" SELECT sum(IIR.quantity * I.calories) as calories 
+                            FROM GROCERY_PROJECT_DB.IngredientsInRecipe IIR, GROCERY_PROJECT_DB.Ingredients I 
+                            WHERE recipe_id = '{}' and IIR.ingredient_id = I.ingredient_id;""".format(recipe_dict['recipe_id']))
+            calories = cur.fetchone()
+            recipe_dict['calories'] = int(calories['calories'])
 
         cur.execute(""" SELECT I.iname, I.calories, IIR.quantity, I.unit
                         FROM GROCERY_PROJECT_DB.Ingredients I INNER JOIN GROCERY_PROJECT_DB.IngredientsInRecipe IIR
@@ -59,7 +65,7 @@ def handler(event, context):
     #response['items'] = recipe_json_list
     json_response = {
             "statusCode": 200,
-            "body": body
+            "body": response
         }
     logger.info(json_response)
 
