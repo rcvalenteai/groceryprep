@@ -80,14 +80,14 @@ def handler(event, context):
     for meal_plan in meal_plan_list:
         mpdict = meal_plan['meal_plan'].__dict__
         mpdict['Tags'] = meal_plan['Tags']
-        mpdict['location'] = 'mealPlans/detail?mealPlanId={}'.format(mpdict['meal_plan_id'])
+        mpdict['location'] = 'mealplan/detail?mealPlanId={}'.format(mpdict['meal_plan_id'])
         mpdict.pop('meal_plan_id')
         meal_plan_json_list.append(mpdict)
 
     response['items'] = meal_plan_json_list
-    logger.info(json_response)
+    logger.info(response)
 
-    return json_response
+    return response
 
 def getFuzzyScore(e):
     return e['fuzzy_score']
