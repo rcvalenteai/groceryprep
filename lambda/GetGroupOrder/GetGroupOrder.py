@@ -3,6 +3,7 @@ import logging
 import rds_config
 import pymysql
 import json
+from decimal import *
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 
@@ -23,6 +24,7 @@ def handler(event, context):
 
     recipe_list = []
     ingredient_list = []
+    total_cost = 0;
 
     try:
         conn = pymysql.Connect(host=rds_host, port=3306, user=name, passwd=password, db=db_name, connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
@@ -58,12 +60,14 @@ def handler(event, context):
         logger.info(recipes)
         for recipe in recipes:
             rdict = recipe
+            cur.execute(""" SELECT sum(IIR.quantity * I.calories) as calories, sum(IIR.quantity * I.price) as cost
+                            FROM GROCERY_PROJECT_DB.IngredientsInRecipe IIR, GROCERY_PROJECT_DB.Ingredients I 
+                            WHERE recipe_id = '{}' and IIR.ingredient_id = I.ingredient_id;""".format(recipe['recipe_id']))
+            result = cur.fetchone()
+            rdict['price'] = Decimal(result['cost']).quantize(Decimal('.01'), rounding=ROUND_HALF_UP)
+            total_cost += rdict['price']
             if (recipe['calories'] is None):
-                cur.execute(""" SELECT sum(IIR.quantity * I.calories) as calories 
-                                FROM GROCERY_PROJECT_DB.IngredientsInRecipe IIR, GROCERY_PROJECT_DB.Ingredients I 
-                                WHERE recipe_id = '{}' and IIR.ingredient_id = I.ingredient_id;""".format(recipe['recipe_id']))
-                calories = cur.fetchone()
-                rdict['calories'] = int(calories['calories'])
+                rdict['calories'] = int(result['calories'])
 
             cur.execute(""" SELECT I.iname, I.calories, IIR.quantity, I.unit
                             FROM GROCERY_PROJECT_DB.Ingredients I INNER JOIN GROCERY_PROJECT_DB.IngredientsInRecipe IIR
@@ -78,7 +82,7 @@ def handler(event, context):
             rdict['items'] = ingredients
             recipe_list.append(rdict)
 
-        cur.execute(""" SELECT OHI.ingredient_id, I.iname, I.calories, I.price, I.quantity, I.unit
+        cur.execute(""" SELECT OHI.ingredient_id, OHI.quantity as servings, I.iname, I.calories, I.quantity, I.unit, sum(OHI.quantity * I.price) as price
                         FROM GROCERY_PROJECT_DB.OrderHasIngredients OHI, GROCERY_PROJECT_DB.Ingredients I
                         WHERE OHI.order_id = '{}' AND OHI.ingredient_id = I.ingredient_id""".format(order['order_id']))
         ingredients = cur.fetchall()
@@ -87,6 +91,8 @@ def handler(event, context):
             idict = ingredient
             idict['location'] = 'ingredients/detail?ingredientId={}'.format(idict['ingredient_id'])
             idict.pop('ingredient_id')
+            idict['price'] = Decimal(idict['price']).quantize(Decimal('.01'), rounding=ROUND_HALF_UP)
+            total_cost += idict['price']
             ingredient_list.append(idict)
 
     cur.close()
@@ -98,6 +104,7 @@ def handler(event, context):
 
     ingredient_json_list = []
     response = {'recipe_count': len(recipe_list), 'ingredient_count': len(ingredient_list)}
+    response['totalCost'] = total_cost
     response['recipes'] = recipe_list
     response['ingredients'] = ingredient_list
     logger.info(response)
