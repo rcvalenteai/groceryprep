@@ -3,7 +3,9 @@ import logging
 import rds_config
 import pymysql
 import json
-import re
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
+from datetime import datetime
 
 #rds settings
 rds_host = "meal-plan-db.cssril6qx5ub.us-east-2.rds.amazonaws.com"
@@ -16,8 +18,7 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event, context):
-    email = event['email']
-    user_password = event['password']
+    user_id = event['userId']
 
     try:
         conn = pymysql.Connect(host=rds_host, port=3306, user=name, passwd=password, db=db_name, connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
@@ -28,27 +29,21 @@ def handler(event, context):
     logger.info("SUCCESS: Connection to RDS MySQL instance succeeded")
 
     with conn.cursor() as cur:
-        cur.execute("""SELECT U.fname, U.lname, U.user_id, UIG.order_group_id
-                       FROM GROCERY_PROJECT_DB.Users U, GROCERY_PROJECT_DB.UserInGroup UIG
-                       WHERE U.email = '{}' AND U.hash_pass = '{}' and U.user_id = UIG.user_id
-                       LIMIT 0, 1""".format(email, user_password))
+        cur.execute("SELECT CC.screen_name, CC.platform, CC.url FROM GROCERY_PROJECT_DB.ContentCreators WHERE user_id = '{}'".format(user_id))
         user = cur.fetchone()
         if not user:
             return {
-                'errorMessage': 'No user with that email/password.'
+                'errorMessage': 'User is not a content creator.'
             }
 
     cur.close()
     del cur
     conn.close()
 
-    response = {
-        'firstName': '{}'.format(user['fname']),
-        'lastName': '{}'.format(user['lname']),
-        'userUrl': 'user?userId={}'.format(user['user_id']),
-        'groupUrl': 'group?groupId={}'.format(user['order_group_id'])
-    }
-
+    response = user
+    user['location'] = "user?userId='{}'".format(user['user_id'])
+    user.pop('user_id')
     logger.info(response)
 
     return response
+

@@ -3,7 +3,8 @@ import logging
 import rds_config
 import pymysql
 import json
-import re
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
 
 #rds settings
 rds_host = "meal-plan-db.cssril6qx5ub.us-east-2.rds.amazonaws.com"
@@ -16,8 +17,9 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event, context):
-    email = event['email']
-    user_password = event['password']
+    user_id = event['userId']
+
+    meal_plan_list = []
 
     try:
         conn = pymysql.Connect(host=rds_host, port=3306, user=name, passwd=password, db=db_name, connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
@@ -28,27 +30,21 @@ def handler(event, context):
     logger.info("SUCCESS: Connection to RDS MySQL instance succeeded")
 
     with conn.cursor() as cur:
-        cur.execute("""SELECT U.fname, U.lname, U.user_id, UIG.order_group_id
-                       FROM GROCERY_PROJECT_DB.Users U, GROCERY_PROJECT_DB.UserInGroup UIG
-                       WHERE U.email = '{}' AND U.hash_pass = '{}' and U.user_id = UIG.user_id
-                       LIMIT 0, 1""".format(email, user_password))
-        user = cur.fetchone()
-        if not user:
-            return {
-                'errorMessage': 'No user with that email/password.'
-            }
+        base_query = "SELECT MP.meal_plan_id, MP.name FROM GROCERY_PROJECT_DB.MealPlansByContentCreators MPBCC, GROCERY_PROJECT_DB.MealPlans MP WHERE MPBCC.user_id = '{}' AND MPBCC.meal_plan_id = MP.meal_plan_id".format(user_id) 
+        cur.execute(base_query)
+        meal_plans = cur.fetchall()
 
     cur.close()
     del cur
     conn.close()
 
-    response = {
-        'firstName': '{}'.format(user['fname']),
-        'lastName': '{}'.format(user['lname']),
-        'userUrl': 'user?userId={}'.format(user['user_id']),
-        'groupUrl': 'group?groupId={}'.format(user['order_group_id'])
-    }
+    response = {'item_count': len(meal_plans)}
 
+    for meal_plan in meal_plans:
+        meal_plan['location'] = 'mealplan/detail?mealPlanId={}'.format(meal_plan['meal_plan_id'])
+        meal_plan.pop('meal_plan_id')
+
+    response['items'] = meal_plans
     logger.info(response)
 
     return response

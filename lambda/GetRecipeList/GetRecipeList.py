@@ -24,8 +24,9 @@ def handler(event, context):
 
     tags = []
     if 'filter' in event:
-        tag_filters = event['filter']
-        tags = tag_filters.split(',')
+        if event['filter']:
+            tag_filters = event['filter']
+            tags = tag_filters.split(',')
     logger.info(tags)
 
     recipe_list = []

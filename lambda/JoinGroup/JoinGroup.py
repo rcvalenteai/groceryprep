@@ -61,8 +61,8 @@ def handler(event, context):
 
         # This trys to catch duplicate key errors. Another method which may be better is to use try catch with pymysql 'IntegrityError'
         cur.execute("SELECT * FROM GROCERY_PROJECT_DB.UserInGroup WHERE user_id = '{}' and order_group_id = '{}'".format(user_id, group_id))
-        group = cur.fetchone()
-        if group:
+        userInGroup = cur.fetchone()
+        if userInGroup:
             return {
                 'errorMessage': 'User is already part of order group.'
             }

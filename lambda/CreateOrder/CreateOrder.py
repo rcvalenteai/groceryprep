@@ -49,7 +49,7 @@ def handler(event, context):
                 'errorMessage': 'There is already an open order for this group.'
             }
 
-        cur.execute("INSERT INTO GROCERY_PROJECT_DB.Order (order_group_id, cost, is_open) VALUES ('{}', 0.0, 1);".format(group_id))
+        cur.execute("INSERT INTO GROCERY_PROJECT_DB.Order (order_group_id, is_open) VALUES ('{}', 1);".format(group_id))
         conn.commit()
 
     cur.close()

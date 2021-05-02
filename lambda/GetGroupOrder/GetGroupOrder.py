@@ -53,7 +53,7 @@ def handler(event, context):
             }
         logger.info("Order Id: {}".format(order['order_id']))
 
-        cur.execute(""" SELECT OHR.recipe_id, R.name, R.description, R.image_link, R.calories, R.servings
+        cur.execute(""" SELECT OHR.recipe_id, OHR.quantity as order_quantity, R.name, R.description, R.image_link, R.calories, R.servings
                         FROM GROCERY_PROJECT_DB.OrderHasRecipes OHR, GROCERY_PROJECT_DB.Recipes R
                         WHERE OHR.order_id = '{}' AND OHR.recipe_id = R.recipe_id""".format(order['order_id']))
         recipes = cur.fetchall()
@@ -82,18 +82,21 @@ def handler(event, context):
             rdict['items'] = ingredients
             recipe_list.append(rdict)
 
-        cur.execute(""" SELECT OHI.ingredient_id, OHI.quantity as servings, I.iname, I.calories, I.quantity, I.unit, sum(OHI.quantity * I.price) as price
+        cur.execute(""" SELECT OHI.ingredient_id, OHI.quantity as order_quantity, I.iname, I.calories, I.quantity, I.unit, sum(OHI.quantity * I.price) as price
                         FROM GROCERY_PROJECT_DB.OrderHasIngredients OHI, GROCERY_PROJECT_DB.Ingredients I
-                        WHERE OHI.order_id = '{}' AND OHI.ingredient_id = I.ingredient_id""".format(order['order_id']))
+                        WHERE OHI.order_id = '{}' AND OHI.ingredient_id = I.ingredient_id
+                        HAVING COUNT(*) > 0""".format(order['order_id']))
         ingredients = cur.fetchall()
         logger.info(ingredients)
-        for ingredient in ingredients:
-            idict = ingredient
-            idict['location'] = 'ingredients/detail?ingredientId={}'.format(idict['ingredient_id'])
-            idict.pop('ingredient_id')
-            idict['price'] = Decimal(idict['price']).quantize(Decimal('.01'), rounding=ROUND_HALF_UP)
-            total_cost += idict['price']
-            ingredient_list.append(idict)
+        if ingredients is not None:
+            for ingredient in ingredients:
+                idict = ingredient
+                logger.info(idict['price'])
+                idict['location'] = 'ingredients/detail?ingredientId={}'.format(idict['ingredient_id'])
+                idict.pop('ingredient_id')
+                idict['price'] = Decimal(idict['price']).quantize(Decimal('.01'), rounding=ROUND_HALF_UP)
+                total_cost += idict['price']
+                ingredient_list.append(idict)
 
     cur.close()
     del cur
