@@ -17,7 +17,14 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event, context):
-    user_id = event['userId']
+    user_url = event['userUrl']
+    match = re.match(r".*?user\?userId=(\d+)", user_url)
+    if match is None:
+        return {
+            'errorMessage': 'Cannot extract userId from userUrl'
+        }
+    user_id = match.group(1)
+
     screen_name = event['screenName']
     platform = event['platform']
     url = event['url']
