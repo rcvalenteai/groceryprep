@@ -70,7 +70,7 @@ def handler(event, context):
     meal_plan_dict['location'] = 'meal_plan/detail?meal_planId={}'.format(meal_plan_dict['meal_plan_id'])
     meal_plan_dict.pop('meal_plan_id')
     response = meal_plan_dict
-    response['ingredients'] = {'item_count': len(recipes_list), 'items': recipes_list}
+    response['recipes'] = {'item_count': len(recipes_list), 'items': recipes_list}
     json_response = {
             "statusCode": 200,
             "body": meal_plan_dict

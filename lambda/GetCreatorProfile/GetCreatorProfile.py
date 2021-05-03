@@ -29,21 +29,17 @@ def handler(event, context):
     logger.info("SUCCESS: Connection to RDS MySQL instance succeeded")
 
     with conn.cursor() as cur:
-        cur.execute("SELECT CC.screen_name, CC.platform, CC.url FROM GROCERY_PROJECT_DB.ContentCreators WHERE user_id = '{}'".format(user_id))
+        cur.execute("SELECT CC.screen_name, CC.platform, CC.url FROM GROCERY_PROJECT_DB.ContentCreators CC WHERE user_id = '{}'".format(user_id))
         user = cur.fetchone()
         if not user:
             return {
                 'errorMessage': 'User is not a content creator.'
             }
+        logger.info(user)
 
     cur.close()
     del cur
     conn.close()
 
-    response = user
-    user['location'] = "user?userId='{}'".format(user['user_id'])
-    user.pop('user_id')
-    logger.info(response)
-
-    return response
+    return user
 

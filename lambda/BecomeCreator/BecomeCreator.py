@@ -4,6 +4,7 @@ import rds_config
 import pymysql
 import json
 import time
+import re
 from datetime import date
 
 #rds settings
@@ -29,7 +30,7 @@ def handler(event, context):
     platform = event['platform']
     url = event['url']
 
-    logger.info("Screen Name: {}".format(screen))
+    logger.info("Screen Name: {}".format(screen_name))
     if (screen_name is None or not screen_name):
         return {
             'errorMessage': 'Cannot be a content creator without a screen name.'
