@@ -34,11 +34,6 @@ def handler(event, context):
         }
     recipe_id = match.group(1)
 
-    if not isinstance(quantity, float):
-        return {
-            'errorMessage': 'Quantity must be a float.'
-        }
-
     logger.info("ingredient Id: {}".format(ingredient_id))
     logger.info("recipe Id: {}".format(recipe_id))
 
