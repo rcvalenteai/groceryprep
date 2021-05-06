@@ -16,7 +16,15 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event, context):
-    name = event['name']
+    user_url = event['userUrl']
+    match = re.match(r".*?user\?userId=(\d+)", user_url)
+    if match is None:
+        return {
+            'errorMessage': 'Cannot extract userId from userUrl'
+        }
+    user_id = match.group(1)
+
+    recipe_name = event['name']
     description = event['description']
     calories = event['calories']
     servings = event['servings']
@@ -30,12 +38,18 @@ def handler(event, context):
     logger.info("SUCCESS: Connection to RDS MySQL instance succeeded")
 
     with conn.cursor() as cur:
-        cur.execute("INSERT INTO GROCERY_PROJECT_DB.Recipes (name, description, image_link, calories, servings) VALUES ('{}', '{}', 'none', '{}', '{}');".format(name, description, calories, servings))
+
+        logger.info("calories")
+        logger.info(calories)
+        cur.execute("INSERT INTO GROCERY_PROJECT_DB.Recipes (name, description, image_link, calories, servings) VALUES (%s, %s, 'none', %s, %s);", (recipe_name, description, calories, servings))
         conn.commit()
 
         cur.execute("SELECT LAST_INSERT_ID() as recipeId;")
         user_dict = cur.fetchone()
         logger.info("recipeId: {}".format(user_dict['recipeId']))
+
+        cur.execute("INSERT INTO GROCERY_PROJECT_DB.RecipesByContentCreators (user_id, recipe_id) VALUES ('{}', '{}')".format(user_id, user_dict['recipeId']))
+        conn.commit()
 
     cur.close()
     del cur
