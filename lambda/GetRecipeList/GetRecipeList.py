@@ -58,7 +58,10 @@ def handler(event, context):
                                 FROM GROCERY_PROJECT_DB.IngredientsInRecipe IIR, GROCERY_PROJECT_DB.Ingredients I 
                                 WHERE recipe_id = '{}' and IIR.ingredient_id = I.ingredient_id;""".format(recipe_obj.recipe_id))
                 calories = cur.fetchone()
-                recipe_obj.calories = int(calories['calories'])
+                if calories['calories'] is not None:
+                    recipe_obj.calories = int(calories['calories'])
+                else:
+                    recipe_obj.calories = 0
 
             cur.execute("""SELECT RT.tag FROM GROCERY_PROJECT_DB.RecipeTag RT WHERE RT.recipe_id = '{}'""".format(recipe_obj.recipe_id))
             tag_dict_list = cur.fetchall()

@@ -46,7 +46,10 @@ def handler(event, context):
                                 FROM GROCERY_PROJECT_DB.IngredientsInRecipe IIR, GROCERY_PROJECT_DB.Ingredients I 
                                 WHERE recipe_id = '{}' and IIR.ingredient_id = I.ingredient_id;""".format(recipe['recipe_id']))
                 calories = cur.fetchone()
-                rdict['calories'] = int(calories['calories'])
+                if calories['calories'] is not None:
+                    rdict['calories'] = int(calories['calories'])
+                else:
+                    rdict['calories'] = 0
 
             cur.execute(""" SELECT I.iname, I.calories, IIR.quantity, I.unit
                             FROM GROCERY_PROJECT_DB.Ingredients I INNER JOIN GROCERY_PROJECT_DB.IngredientsInRecipe IIR

@@ -28,9 +28,9 @@ def handler(event, context):
     logger.info("SUCCESS: Connection to RDS MySQL instance succeeded")
 
     with conn.cursor() as cur:
-        cur.execute("""SELECT U.fname, U.lname, U.user_id, UIG.order_group_id
+        cur.execute("""SELECT U.fname, U.lname, U.user_id, IF(UIG.user_id = U.user_id, UIG.order_group_id, NULL) as order_group_id
                        FROM GROCERY_PROJECT_DB.Users U, GROCERY_PROJECT_DB.UserInGroup UIG
-                       WHERE U.email = '{}' AND U.hash_pass = '{}' and U.user_id = UIG.user_id
+                       WHERE U.email = '{}' AND U.hash_pass = '{}'
                        LIMIT 0, 1""".format(email, user_password))
         user = cur.fetchone()
         if not user:

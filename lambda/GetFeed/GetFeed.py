@@ -39,7 +39,7 @@ def handler(event, context):
 
         feed_query = """ SELECT * FROM GROCERY_PROJECT_DB.Recipes R WHERE R.recipe_id IN
                          (SELECT DISTINCT MPC.recipe_id FROM GROCERY_PROJECT_DB.Subscribe S, GROCERY_PROJECT_DB.MealPlanContains MPC
-                         WHERE S.user_id = '1' and S.meal_plan_id = MPC.meal_plan_id);"""
+                         WHERE S.user_id = '{}' and S.meal_plan_id = MPC.meal_plan_id);""".format(user['user_id'])
         cur.execute(feed_query)
 
         recipes = cur.fetchall()
@@ -53,7 +53,10 @@ def handler(event, context):
                                 FROM GROCERY_PROJECT_DB.IngredientsInRecipe IIR, GROCERY_PROJECT_DB.Ingredients I 
                                 WHERE recipe_id = '{}' and IIR.ingredient_id = I.ingredient_id;""".format(recipe_obj.recipe_id))
                 calories = cur.fetchone()
-                recipe_obj.calories = int(calories['calories'])
+                if calories['calories'] is not None:
+                    recipe_obj.calories = int(calories['calories'])
+                else:
+                    recipe_obj.calories = 0
 
             cur.execute("""SELECT RT.tag FROM GROCERY_PROJECT_DB.RecipeTag RT WHERE RT.recipe_id = '{}'""".format(recipe_obj.recipe_id))
             tag_dict_list = cur.fetchall()
@@ -77,9 +80,8 @@ def handler(event, context):
         recipe_json_list.append(rdict)
 
     response['items'] = recipe_json_list
-    logger.info(json_response)
 
-    return json_response
+    return response
 
 def getName(e):
     return e['Recipe'].name

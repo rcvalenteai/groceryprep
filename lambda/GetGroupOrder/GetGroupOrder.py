@@ -69,7 +69,7 @@ def handler(event, context):
             if (recipe['calories'] is None):
                 rdict['calories'] = int(result['calories'])
 
-            cur.execute(""" SELECT I.iname, I.calories, IIR.quantity, I.unit
+            cur.execute(""" SELECT I.iname, I.calories, IIR.quantity * I.quantity as quantity, I.unit
                             FROM GROCERY_PROJECT_DB.Ingredients I INNER JOIN GROCERY_PROJECT_DB.IngredientsInRecipe IIR
                             ON I.ingredient_id = IIR.ingredient_id
                             WHERE IIR.recipe_id = '{}'""".format(recipe['recipe_id']))
